@@ -25,7 +25,7 @@
 
   <name>Fluentd Plugin</name>
   <description>A Jenkins plugin which allows to publish JSON data directly to Fluentd</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/FluentD+Plugin</url>
 
   <licenses>
     <license>
