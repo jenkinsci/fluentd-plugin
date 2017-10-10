@@ -25,7 +25,7 @@ public class FluentHelper {
      * @param jsonFromExtension json that would be used as extension
      * @param jsonFromFile json that would be extend
      * @param startTimeInMillis job start time in milliseconds
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if specified json can not be parsed.
      */
     static void sendJson(FluentLogger fluentLogger, String tag, Map<String, String> envVars, String jsonFromExtension,
                          String jsonFromFile, long startTimeInMillis) throws IllegalArgumentException {

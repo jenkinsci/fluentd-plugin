@@ -1,0 +1,59 @@
+<p><strong>Gerrit Trigger Plugin Listener</strong> allows to subscribe on each build started / validation completed event.</p>
+If listener received change related event (i.e. PatchsetCreated) for <code>onCompleted</code>
+(this event is triggered in the moment when Gerrit Trigger Plugin pushes the vote to the change) it will push to FluentD this data:
+<table border="1" cellpadding="2px">
+    <thead>
+    <tr>
+        <th>Field name</th><th>Example</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>result</td><td>ABORTED</td>
+    </tr>
+    <tr>
+        <td>event_type</td><td>patchset-created</td>
+    </tr>
+    <tr>
+        <td>command_size</td><td>33</td>
+    </tr>
+    <tr>
+        <td>owner_name</td><td>name</td>
+    </tr>
+    <tr>
+        <td>owner_email</td><td>email</td>
+    </tr>
+    <tr>
+        <td>change_id</td><td>change</td>
+    </tr>
+    <tr>
+        <td>project</td><td>project_name</td>
+    </tr>
+    <tr>
+        <td>topic</td><td>topic_name</td>
+    </tr>
+    <tr>
+        <td>branch</td><td>branch_name</td>
+    </tr>
+    <tr>
+        <td>patchset_number</td><td>number</td>
+    </tr>
+    <tr>
+        <td>patchset_kind</td><td>TRIVIAL_REBASE</td>
+    </tr>
+    <tr>
+        <td>change_created_on</td><td>1507274800000</td>
+    </tr>
+    <tr>
+        <td>patchset_created_on</td><td>1507274900000</td>
+    </tr>
+    <tr>
+        <td>event_created_on</td><td>1507275000000</td>
+    </tr>
+    </tbody>
+</table>
+For <code>onStarted</code> (this event is triggered in the moment when Gerrit Trigger Plugin sends information that builds started) it will push the same data except result field.
+<p>In case of not a change related changes (i.e. RefUpdated) only <code>command</code> and <code>result</code> will be sent.
+But it should never happen according the current implementation of GerritTriggerPlugin</p>
+The data for <code>onStarted</code> is pushed with tag <code>gerrit_trigger_plugin.on_started</code>. The <code>onCompleted</code> goes to <code>gerrit_trigger_plugin.on_completed</code>.
+
