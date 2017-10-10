@@ -22,5 +22,9 @@
       <f:entry title="Port">
         <f:textbox field="port" />
       </f:entry>
+      <f:entry help="/plugin/fluentd/help-GerritTriggerPluginListener.html">
+      <f:checkbox field="enableGerritTriggeredBuildListener" checked="${descriptor.enableGerritTriggeredBuildListener}"/>
+        <label class="attach-previous">Send the data for every onStarted/onCompleted of Gerrit Trigger Plugin Event</label>
+      </f:entry>
   </f:section>
 </j:jelly>
