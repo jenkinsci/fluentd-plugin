@@ -33,7 +33,6 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 24224;
 
-    private static transient volatile FluentLogger fluentLogger;
     private final String tag;
     private final String json;
     private final String fileName;
@@ -92,7 +91,7 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
         final Map<String, String> envVars = getEnvVariables(build, listener);
 
         try {
-            sendJson(getFluentLogger(), tag, envVars, json, jsonFromFile, build.getStartTimeInMillis());
+            sendJson(FluentLoggerHolder.getLogger(), tag, envVars, json, jsonFromFile, build.getStartTimeInMillis());
             return true;
         } catch (IllegalArgumentException e) {
             listener.error(e.getMessage());
@@ -113,17 +112,6 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
         return envVars;
     }
 
-    private FluentLogger getFluentLogger() {
-        if (fluentLogger == null) {
-            synchronized (Fluentd.class) {
-                if (fluentLogger == null) {
-                    final DescriptorImpl desc = getDescriptor();
-                    fluentLogger = FluentLogger.getLogger(desc.getLoggerName(), desc.getHost(), getDescriptor().getPort());
-                }
-            }
-        }
-        return fluentLogger;
-    }
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -164,6 +152,8 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
             if (port == 0) port = DEFAULT_PORT;
             if (host == null || host.isEmpty()) host = DEFAULT_HOST;
             if (loggerName == null || loggerName.isEmpty()) loggerName = DEFAULT_LOGGER;
+
+            FluentLoggerHolder.initLogger(FluentLogger.getLogger(loggerName, host, port));
         }
 
         @Override
@@ -186,18 +176,21 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
             port = formData.optInt("port", DEFAULT_PORT);
             host = formData.optString("host", DEFAULT_HOST);
             save();
-            fluentLogger = null; // reset logger
+            FluentLoggerHolder.initLogger(FluentLogger.getLogger(loggerName, host, port));
             return super.configure(req, formData);
         }
 
+        @SuppressWarnings("unused")
         public String getLoggerName() {
             return loggerName;
         }
 
+        @SuppressWarnings("unused")
         public int getPort() {
             return port;
         }
 
+        @SuppressWarnings("unused")
         public String getHost() {
             return host;
         }
