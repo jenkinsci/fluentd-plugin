@@ -134,6 +134,33 @@ public class GerritTriggerPluginListenerTest {
         verify(fluentLogger, times(1)).log(eq("gerrit_trigger_plugin.on_completed"), eq(expectedData));
     }
 
+    @Test
+    public void onCompletedEnabledLogChangedBasedWithoutTopic() throws Exception {
+        OptionalFeaturesHolder.setIsGerritTriggerPluginListenerEnabled(true);
+        PatchsetCreated gerritTriggeredEvent = getChangeBasedEvent();
+        when(gerritTriggeredEvent.getChange().getTopic()).thenReturn(null);
+
+        listener.onCompleted(Result.ABORTED, gerritTriggeredEvent, COMMAND);
+
+        Map<String, Object> expectedData = new HashMap<>();
+        expectedData.put("result", "ABORTED");
+        expectedData.put("event_type", "patchset-created");
+        expectedData.put("command_size", 14);
+        expectedData.put("owner_name", "name");
+        expectedData.put("owner_email", "email");
+        expectedData.put("change_id", "change");
+        expectedData.put("project", "project_name");
+        expectedData.put("topic", "");
+        expectedData.put("branch", "branch_name");
+        expectedData.put("patchset_number", "number");
+        expectedData.put("patchset_kind", "TRIVIAL_REBASE");
+        expectedData.put("change_created_on", 5L);
+        expectedData.put("patchset_created_on", 10L);
+        expectedData.put("event_created_on", 15L);
+
+        verify(fluentLogger, times(1)).log(eq("gerrit_trigger_plugin.on_completed"), eq(expectedData));
+    }
+
     private GerritTriggeredEvent getNotChangedBasedEvent() {
         GerritTriggeredEvent gerritTriggeredEvent = Mockito.mock(RefUpdated.class);
 
@@ -142,7 +169,7 @@ public class GerritTriggerPluginListenerTest {
         return gerritTriggeredEvent;
     }
 
-    private GerritTriggeredEvent getChangeBasedEvent() {
+    private PatchsetCreated getChangeBasedEvent() {
         PatchsetCreated patchsetCreated = Mockito.mock(PatchsetCreated.class);
         Change change = Mockito.mock(Change.class);
         Account account = Mockito.mock(Account.class);
