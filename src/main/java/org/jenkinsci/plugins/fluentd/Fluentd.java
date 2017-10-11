@@ -142,6 +142,7 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
         private String loggerName;
         private String host;
         private int port;
+        private boolean enableGerritTriggeredBuildListener;
 
         /**
          * In order to load the persisted global configuration, you have to
@@ -153,6 +154,7 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
             if (host == null || host.isEmpty()) host = DEFAULT_HOST;
             if (loggerName == null || loggerName.isEmpty()) loggerName = DEFAULT_LOGGER;
 
+            OptionalFeaturesHolder.setIsGerritTriggerPluginListenerEnabled(enableGerritTriggeredBuildListener);
             FluentLoggerHolder.initLogger(FluentLogger.getLogger(loggerName, host, port));
         }
 
@@ -175,7 +177,10 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
             loggerName = formData.optString("loggerName", DEFAULT_LOGGER);
             port = formData.optInt("port", DEFAULT_PORT);
             host = formData.optString("host", DEFAULT_HOST);
+            enableGerritTriggeredBuildListener = formData.optBoolean("enableGerritTriggeredBuildListener");
             save();
+
+            OptionalFeaturesHolder.setIsGerritTriggerPluginListenerEnabled(enableGerritTriggeredBuildListener);
             FluentLoggerHolder.initLogger(FluentLogger.getLogger(loggerName, host, port));
             return super.configure(req, formData);
         }
@@ -193,6 +198,11 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
         @SuppressWarnings("unused")
         public String getHost() {
             return host;
+        }
+
+        @SuppressWarnings("unused")
+        public boolean isEnableGerritTriggeredBuildListener() {
+            return enableGerritTriggeredBuildListener;
         }
     }
 }
