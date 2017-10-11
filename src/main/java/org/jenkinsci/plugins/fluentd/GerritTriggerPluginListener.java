@@ -63,7 +63,13 @@ public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
         data.put("change_id", change.getId());
         data.put("branch", change.getBranch());
         data.put("project", change.getProject());
-        data.put("topic", change.getTopic());
+
+        String topic = change.getTopic();
+        if (topic != null) {
+            data.put("topic", change.getTopic());
+        } else {
+            data.put("topic", "");
+        }
 
         if (change.getCreatedOn() != null) {
             data.put("change_created_on", change.getCreatedOn().getTime());
