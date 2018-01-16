@@ -9,14 +9,16 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Extension;
 import hudson.model.Result;
+import org.fluentd.logger.FluentLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 @Extension(optional = true)
 public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
-    private static final Logger LOGGER = Logger.getLogger(GerritTriggerPluginListener.class.toString());
+    private static final Logger LOGGER = LoggerFactory.getLogger(GerritTriggerPluginListener.class);
     private static final String GERRIT_TRIGGER_STARTED_TAG = "gerrit_trigger_plugin.on_started";
     private static final String GERRIT_TRIGGER_COMPLETED_TAG = "gerrit_trigger_plugin.on_completed";
 
@@ -26,16 +28,22 @@ public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
             return;
         }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("event_type", gerritTriggeredEvent.getEventType().getTypeValue());
-        data.put("command_size", command.length());
+        try {
+            Map<String, Object> data = new HashMap<>();
+            data.put("event_type", gerritTriggeredEvent.getEventType().getTypeValue());
+            data.put("command_size", command.length());
 
-        if (gerritTriggeredEvent instanceof ChangeBasedEvent) {
-            addChangeBasedInfo((ChangeBasedEvent) gerritTriggeredEvent, data);
+            if (gerritTriggeredEvent instanceof ChangeBasedEvent) {
+                addChangeBasedInfo((ChangeBasedEvent) gerritTriggeredEvent, data);
+            }
+
+            logEvent(GERRIT_TRIGGER_STARTED_TAG, gerritTriggeredEvent, data);
+        } catch (Exception exception) {
+            LOGGER.warn("{} was not logged for event: {} due to exception during logging: {}",
+                    GERRIT_TRIGGER_STARTED_TAG,
+                    gerritTriggeredEvent,
+                    exception.getMessage());
         }
-
-        FluentLoggerHolder.getLogger().log(GERRIT_TRIGGER_STARTED_TAG, data);
-        LOGGER.fine("OnStarted is logged for event: " + gerritTriggeredEvent.toString());
     }
 
     @Override
@@ -44,17 +52,34 @@ public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
             return;
         }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("event_type", gerritTriggeredEvent.getEventType().getTypeValue());
-        data.put("command_size", command.length());
-        data.put("result", result.toString());
+        try {
+            Map<String, Object> data = new HashMap<>();
+            data.put("event_type", gerritTriggeredEvent.getEventType().getTypeValue());
+            data.put("command_size", command.length());
+            data.put("result", result.toString());
 
-        if (gerritTriggeredEvent instanceof ChangeBasedEvent) {
-            addChangeBasedInfo((ChangeBasedEvent) gerritTriggeredEvent, data);
+            if (gerritTriggeredEvent instanceof ChangeBasedEvent) {
+                addChangeBasedInfo((ChangeBasedEvent) gerritTriggeredEvent, data);
+            }
+
+            logEvent(GERRIT_TRIGGER_COMPLETED_TAG, gerritTriggeredEvent, data);
+        } catch (Exception exception) {
+            LOGGER.warn("{} was not logged for event: {} due to exception during logging: {}",
+                    GERRIT_TRIGGER_COMPLETED_TAG,
+                    gerritTriggeredEvent,
+                    exception.getMessage());
+        }
+    }
+
+    private void logEvent(String tag, GerritTriggeredEvent gerritTriggeredEvent, Map<String, Object> data) {
+        FluentLogger logger = FluentLoggerHolder.getLogger();
+        if (logger == null) {
+            LOGGER.warn("Can't send data: fluentd logger is not initialized");
+            return;
         }
 
-        FluentLoggerHolder.getLogger().log(GERRIT_TRIGGER_COMPLETED_TAG, data);
-        LOGGER.fine("OnCompleted is logged for event: " + gerritTriggeredEvent.toString());
+        logger.log(tag, data);
+        LOGGER.trace("{} is logged for event: {}", tag, gerritTriggeredEvent);
     }
 
     private void addChangeBasedInfo(ChangeBasedEvent changeBasedEvent, Map<String, Object> data) {
