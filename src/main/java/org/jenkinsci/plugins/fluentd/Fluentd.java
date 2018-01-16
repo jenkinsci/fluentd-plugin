@@ -90,8 +90,15 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
     private boolean send(String json, String jsonFromFile, @Nonnull Run<?, ?> build, @Nonnull TaskListener listener) throws InterruptedException {
         final Map<String, String> envVars = getEnvVariables(build, listener);
 
+        FluentLogger logger = FluentLoggerHolder.getLogger();
+
+        if (logger == null) {
+            listener.error("Can't send data: fluentd logger is not initialized");
+            return false;
+        }
+
         try {
-            sendJson(FluentLoggerHolder.getLogger(), tag, envVars, json, jsonFromFile, build.getStartTimeInMillis());
+            sendJson(logger, tag, envVars, json, jsonFromFile, build.getStartTimeInMillis());
             return true;
         } catch (IllegalArgumentException e) {
             listener.error(e.getMessage());

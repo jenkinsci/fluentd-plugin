@@ -1,16 +1,19 @@
 package org.jenkinsci.plugins.fluentd;
 
 import org.fluentd.logger.FluentLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
 
 /**
  * Holds the reference to the current {@link FluentLogger}
  */
 final class FluentLoggerHolder {
-    private static final Logger LOGGER = Logger.getLogger(FluentLogger.class.toString());
+    private static final Logger LOGGER = LoggerFactory.getLogger(FluentLogger.class);
     private static transient volatile FluentLogger fluentLogger;
 
+    @CheckForNull
     static FluentLogger getLogger() {
         return fluentLogger;
     }
