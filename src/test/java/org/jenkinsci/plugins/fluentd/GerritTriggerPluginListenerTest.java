@@ -104,6 +104,7 @@ public class GerritTriggerPluginListenerTest {
         expectedData.put("change_created_on", 5L);
         expectedData.put("patchset_created_on", 10L);
         expectedData.put("event_created_on", 15L);
+        expectedData.put("change_number", "777");
 
         verify(fluentLogger, times(1)).log(eq("gerrit_trigger_plugin.on_started"), eq(expectedData));
     }
@@ -130,6 +131,7 @@ public class GerritTriggerPluginListenerTest {
         expectedData.put("change_created_on", 5L);
         expectedData.put("patchset_created_on", 10L);
         expectedData.put("event_created_on", 15L);
+        expectedData.put("change_number", "777");
 
         verify(fluentLogger, times(1)).log(eq("gerrit_trigger_plugin.on_completed"), eq(expectedData));
     }
@@ -157,6 +159,7 @@ public class GerritTriggerPluginListenerTest {
         expectedData.put("change_created_on", 5L);
         expectedData.put("patchset_created_on", 10L);
         expectedData.put("event_created_on", 15L);
+        expectedData.put("change_number", "777");
 
         verify(fluentLogger, times(1)).log(eq("gerrit_trigger_plugin.on_completed"), eq(expectedData));
     }
@@ -189,6 +192,7 @@ public class GerritTriggerPluginListenerTest {
         when(change.getBranch()).thenReturn("branch_name");
         when(change.getProject()).thenReturn("project_name");
         when(change.getTopic()).thenReturn("topic_name");
+        when(change.getNumber()).thenReturn("777");
         when(patchSet.getNumber()).thenReturn("number");
         when(patchSet.getKind()).thenReturn(GerritChangeKind.TRIVIAL_REBASE);
         when(patchSet.getCreatedOn()).thenReturn(new Date(10));
