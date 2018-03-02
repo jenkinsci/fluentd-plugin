@@ -21,6 +21,7 @@ public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(GerritTriggerPluginListener.class);
     private static final String GERRIT_TRIGGER_STARTED_TAG = "gerrit_trigger_plugin.on_started";
     private static final String GERRIT_TRIGGER_COMPLETED_TAG = "gerrit_trigger_plugin.on_completed";
+    private static final HashMap<GerritTriggeredEvent, Long> startedOn = new HashMap<>();
 
     @Override
     public void onStarted(GerritTriggeredEvent gerritTriggeredEvent, String command) {
@@ -35,6 +36,10 @@ public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
 
             if (gerritTriggeredEvent instanceof ChangeBasedEvent) {
                 addChangeBasedInfo((ChangeBasedEvent) gerritTriggeredEvent, data);
+            }
+
+            if (!startedOn.containsKey(gerritTriggeredEvent)) {
+                startedOn.put(gerritTriggeredEvent, System.currentTimeMillis());
             }
 
             logEvent(GERRIT_TRIGGER_STARTED_TAG, gerritTriggeredEvent, data);
@@ -57,6 +62,11 @@ public class GerritTriggerPluginListener extends GerritTriggeredBuildListener {
             data.put("event_type", gerritTriggeredEvent.getEventType().getTypeValue());
             data.put("command_size", command.length());
             data.put("result", result.toString());
+
+            Long started = startedOn.remove(gerritTriggeredEvent);
+            if (started != null) {
+                data.put("duration", System.currentTimeMillis() - started);
+            }
 
             if (gerritTriggeredEvent instanceof ChangeBasedEvent) {
                 addChangeBasedInfo((ChangeBasedEvent) gerritTriggeredEvent, data);
