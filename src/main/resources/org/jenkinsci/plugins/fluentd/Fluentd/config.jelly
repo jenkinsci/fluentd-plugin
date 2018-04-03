@@ -12,4 +12,7 @@
   <f:entry>
     <f:checkbox field="failBuild"/><label class="attach-previous">Fail build if sending to fluentd failed</label>
   </f:entry>
+  <f:entry>
+    <f:checkbox field="pushFromAgent"/><label class="attach-previous">Push from agent</label>
+  </f:entry>
 </j:jelly>

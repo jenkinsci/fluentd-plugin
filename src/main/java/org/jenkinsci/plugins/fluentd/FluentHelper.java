@@ -23,21 +23,21 @@ public class FluentHelper {
      * @param fluentLogger logger for publishing data
      * @param tag fluentd tag
      * @param envVars environment variables
-     * @param jsonFromExtension json that would be used as extension
-     * @param jsonFromFile json that would be extend
+     * @param extensionJson json that would be used as extension
+     * @param json json that would be extend
      * @param startTimeInMillis job start time in milliseconds
      * @throws IllegalArgumentException if specified json can not be parsed.
      */
-    static void sendJson(FluentLogger fluentLogger, String tag, Map<String, String> envVars, String jsonFromExtension,
-                         String jsonFromFile, long startTimeInMillis) throws IllegalArgumentException {
+    public static void sendJson(FluentLogger fluentLogger, String tag, Map<String, String> envVars, String extensionJson,
+                                String json, long startTimeInMillis) throws IllegalArgumentException {
         final JSONObject extension;
-        if (!jsonFromExtension.isEmpty()) {
-            extension = (JSONObject) decodeJson(jsonFromExtension, envVars);
+        if (!extensionJson.isEmpty()) {
+            extension = (JSONObject) decodeJson(extensionJson, envVars);
         } else {
             extension = new JSONObject();
         }
 
-        final Object jsonObject = decodeJson(jsonFromFile, envVars);
+        final Object jsonObject = decodeJson(json, envVars);
 
         if (jsonObject instanceof JSONArray) {
             for(Map<String, Object> sample : fillMap((JSONArray) jsonObject, extension)) {
@@ -54,7 +54,7 @@ public class FluentHelper {
         try {
             return new JSONParser().parse(decodedJson);
         } catch (ParseException e) {
-            throw new IllegalArgumentException("Failed to convert string: " + decodedJson + " to JSON", e);
+            throw new IllegalArgumentException("Failed to convert string " + decodedJson + " to JSON", e);
         }
     }
 
