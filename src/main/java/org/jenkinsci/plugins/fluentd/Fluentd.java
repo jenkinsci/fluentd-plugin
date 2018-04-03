@@ -10,9 +10,13 @@ import hudson.model.TaskListener;
 import hudson.tasks.*;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.fluentd.logger.FluentLogger;
+import org.jenkinsci.plugins.fluentd.callable.FluentCallable;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -29,6 +33,7 @@ import static org.jenkinsci.plugins.fluentd.FluentHelper.sendJson;
  */
 @SuppressWarnings("WeakerAccess")
 public class Fluentd extends Recorder implements SimpleBuildStep {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Fluentd.class);
     public static final String DEFAULT_LOGGER = "Jenkins";
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 24224;
@@ -37,13 +42,15 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
     private final String json;
     private final String fileName;
     private final boolean failBuild;
+    private final boolean pushFromAgent;
 
     @DataBoundConstructor
-    public Fluentd(String tag, boolean failBuild, String fileName, String json) {
+    public Fluentd(String tag, boolean failBuild, String fileName, String json, boolean pushFromAgent) {
         this.tag = tag;
         this.failBuild = failBuild;
         this.fileName = fileName;
         this.json = json;
+        this.pushFromAgent = pushFromAgent;
     }
 
     @SuppressWarnings("unused")
@@ -66,20 +73,35 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
         return failBuild;
     }
 
+    @SuppressWarnings("unused")
+    public boolean isPushFromAgent() {
+        return pushFromAgent;
+    }
+
     @Override
     public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
-        boolean succeed = false;
+        boolean succeed = true;
 
-        // TODO: Publish from slave if it's possible
-        if (fileName != null && !fileName.isEmpty()) {
-            final FilePath file = new FilePath(workspace, fileName);
-            if (file.exists()) {
-                succeed = send(json, file.readToString(), build, listener);
+        Map<String, String> envVars = getEnvVariables(build, listener);
+
+        LOGGER.debug("Tag {}, json {}, filename {}", tag, json, fileName);
+
+        try {
+            if (StringUtils.isNotEmpty(fileName)) {
+                DescriptorImpl descriptor = getDescriptor();
+                String loggerName = descriptor.getLoggerName();
+                String host = getDescriptor().getHost();
+                int port = getDescriptor().getPort();
+
+                succeed = invoke(workspace,
+                        new FluentCallable(loggerName, host, port, tag, json, build.getStartTimeInMillis(), envVars));
             } else {
-                listener.error("File doesn't exist: " + fileName);
+                sendJson(FluentLoggerHolder.getLogger(), tag, envVars, StringUtils.EMPTY, json, build.getStartTimeInMillis());
             }
-        } else {
-            succeed = send(json, "{}", build, listener);
+        } catch (IllegalArgumentException | IOException exception) {
+            listener.error("Can't send data: %s", exception.getMessage());
+            LOGGER.error("Exception happened during sending json {}", exception);
+            succeed = false;
         }
 
         if (!succeed && failBuild) {
@@ -87,23 +109,14 @@ public class Fluentd extends Recorder implements SimpleBuildStep {
         }
     }
 
-    private boolean send(String json, String jsonFromFile, @Nonnull Run<?, ?> build, @Nonnull TaskListener listener) throws InterruptedException {
-        final Map<String, String> envVars = getEnvVariables(build, listener);
-
-        FluentLogger logger = FluentLoggerHolder.getLogger();
-
-        if (logger == null) {
-            listener.error("Can't send data: fluentd logger is not initialized");
-            return false;
-        }
-
-        try {
-            sendJson(logger, tag, envVars, json, jsonFromFile, build.getStartTimeInMillis());
-            return true;
-        } catch (IllegalArgumentException e) {
-            listener.error(e.getMessage());
-            e.printStackTrace(listener.getLogger());
-            return false;
+    private boolean invoke(FilePath workspace, FluentCallable callable) throws InterruptedException, IOException {
+        final FilePath filePath = new FilePath(workspace, fileName);
+        if (pushFromAgent) {
+            LOGGER.debug("Push {} with tag {} from agent", fileName, tag);
+            return filePath.act(callable);
+        } else {
+            LOGGER.debug("Push {} with tag {} from master", fileName, tag);
+            return callable.invoke(filePath);
         }
     }
 

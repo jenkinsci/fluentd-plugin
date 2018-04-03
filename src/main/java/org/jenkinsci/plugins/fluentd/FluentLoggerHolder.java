@@ -9,20 +9,25 @@ import javax.annotation.CheckForNull;
 /**
  * Holds the reference to the current {@link FluentLogger}
  */
-final class FluentLoggerHolder {
+public final class FluentLoggerHolder {
     private static final Logger LOGGER = LoggerFactory.getLogger(FluentLogger.class);
     private static transient volatile FluentLogger fluentLogger;
 
     @CheckForNull
-    static FluentLogger getLogger() {
+    public static FluentLogger getLogger() {
         return fluentLogger;
     }
 
-    static void initLogger(FluentLogger newLogger) {
+    public static void initLogger(FluentLogger newLogger) {
         if (fluentLogger != null) {
             LOGGER.info("Reset fluent logger");
         }
 
         fluentLogger = newLogger;
+    }
+
+    public static void initLogger(String loggerName, String host, int port) {
+        FluentLogger logger = FluentLogger.getLogger(loggerName, host, port);
+        initLogger(logger);
     }
 }
