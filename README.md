@@ -55,22 +55,50 @@ To get started:
 1. Add "Post Build Action" -> "Send to Fluentd".
 1. Specify the desired file (and extension in JSON format if needed).
 
-Examples
+Sending data to Fluentd as a post-build action
 ---
 
-Plugin supports two types of JSON data: Single JSON and JSON array. Also, the plugin supports environment variable
+Using this plugin you can send custom data to your FluentD instance. The plugin supports two types of JSON data: Single JSON and JSON array. Also, the plugin supports environment variable
 expansion as part extending JSON data.
 
-1. If you extend {"a1": "b1"} by {"a2": "b2"}, the plugin would send {"a1": "b1", "a2": "b2"}.
-2. If you extend [{"a1": "b1"},{"a2": "b2"}] by {"a3": "b3"}, the plugin would send [{"a1": "b1", "a3": "b3"}, {"a2": "b2", "a3": "b3"}].
-3. If you extend {"a1": "b1"} by {"number": "$BUILD_NUMBER"}, the plugin would expand the environment variable for each execution separately.
+1. If you extend `{"a1": "b1"}` by `{"a2": "b2"}`, the plugin would send `{"a1": "b1", "a2": "b2"}`.
+2. If you extend `[{"a1": "b1"},{"a2": "b2"}]` by `{"a3": "b3"}`, the plugin would send `[{"a1": "b1", "a3": "b3"}, {"a2": "b2", "a3": "b3"}]`.
+3. If you extend `{"a1": "b1"}` by `{"number": "$BUILD_NUMBER"}`, the plugin would expand the environment variable for each execution separately.
 So, for the first run the plugin would submit
-{"a1": "b1", "number": "1"}
+`{"a1": "b1", "number": "1"}`
 and for second one
-{"a1": "b1", "number": "2"}
+`{"a1": "b1", "number": "2"}`
 etc.
 
-Additionally, the plugin adds a "timestamp" field into the JSON data. The value of this field is equals the start time of the job.
+The plugin supports only json files with flat structure. It means that you can not have nested elements. See examples below. 
+
+**Good json**:
+
+```json
+  {"test_name": "some_test", "duration": 100, "passed": false }
+```
+
+or
+
+```json
+   [{"test_name": "some_test", "duration": 100, "passed": false }, 
+    {"test_name": "another_test", "duration": 10, "passed": true }]
+```
+
+**Bad json**:
+
+```json
+  {"test_suite": "some_suite", "test": [{ "name": "test1"}, {"name": "test2"}]}
+```
+
+Additionally, the plugin adds a "timestamp" field to the JSON data. The value of this field is equal to the start time of the build.
+
+Supported plugins
+---
+
+If you had installed one of this plugins, you can enable sending additional data collected by the plugin:
+
+* Gerrit Trigger Plugin exposes all available information plus feedback time (difference between first build and completed feedback)
 
 Authors
 ---
